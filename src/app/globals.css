@@ -12,8 +12,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Manual dark theme (class-based) */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+/* Fallback to OS preference ONLY when no manual choice is set.
+   If you add a `.light` class manually, it will win over this block. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.dark) {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
