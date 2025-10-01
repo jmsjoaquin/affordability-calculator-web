@@ -120,10 +120,10 @@ const handleRentChange = (v: { amount: number; frequency: Frequency; annual: num
           {/* Tenants */}
           <div className="rounded max-h-[30vh] overflow-y-auto overflow-x-hidden overscroll-contain">
             <IncomesEditor
-              label="Applicants"
+              label="Applicant"
               items={tenants}
               onChange={setTenants}
-              rowPrefix="Applicants"
+              rowPrefix="Applicant"
               placeholder="Net Salary"
               minRows={3}
             />
