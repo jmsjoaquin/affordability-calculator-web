@@ -3,11 +3,15 @@ import React, { useEffect, useMemo, useRef } from "react";
 import type { IncomeItem, Frequency } from "@/lib/types";
 
 const FREQS: Frequency[] = ["weekly", "fortnightly", "annual"];
-type UIIncomeItem = Omit<IncomeItem, "amount"> & { amount: number | "" };
+type UIIncomeItem = Omit<IncomeItem, "amount"> & {
+  amount: number | "";
+  draft?: string; // <- keeps exact typed text during editing
+};
 
 const makeBlank = (last?: Frequency): UIIncomeItem => ({
   source: "",
   amount: "",
+  draft: "",
   frequency: (last ?? "weekly") as Frequency,
 });
 
@@ -23,25 +27,26 @@ function formatWithCommas(raw: string): { formatted: string; numeric: number | "
   const formatted = dec !== undefined ? `${intFmt}.${dec}` : intFmt;
   const numeric =
     intPart === "" && dec === undefined ? "" : Number(intPart + (dec !== undefined ? `.${dec}` : ""));
-  return { formatted, numeric };
+  return { formatted, numeric: Number.isFinite(Number(numeric)) ? (numeric as number) : "" };
 }
 
-// keep caret stable after formatting
+// keep caret stable after formatting (track decimalsBefore!)
 function placeCaretFromDigitCount(
   input: HTMLInputElement,
   formatted: string,
   digitsBefore: number,
-  wasAfterDot: boolean
+  wasAfterDot: boolean,
+  decimalsBefore: number
 ) {
   if (wasAfterDot) {
     const dotIdx = formatted.indexOf(".");
     if (dotIdx >= 0) {
-      input.setSelectionRange(dotIdx + 1, dotIdx + 1);
+      const target = Math.min(dotIdx + 1 + decimalsBefore, formatted.length);
+      input.setSelectionRange(target, target);
       return;
     }
   }
-  let seen = 0;
-  let pos = 0;
+  let seen = 0, pos = 0;
   while (pos < formatted.length && seen < digitsBefore) {
     if (/\d/.test(formatted[pos])) seen++;
     pos++;
@@ -55,7 +60,7 @@ export function IncomesEditor({
   onChange,
   minRows = 3,
   rowPrefix = "Tenant",
-  placeholder = "Net Salary",   // 👈 new default
+  placeholder = "Net Salary",
 }: {
   label: string;
   items: UIIncomeItem[];
@@ -64,8 +69,6 @@ export function IncomesEditor({
   rowPrefix?: string;
   placeholder?: string;
 }) {
-
-  // refs for amount and freq group per row
   const rowRefs = useRef<{ amount: HTMLInputElement | null; freq: HTMLDivElement | null }[]>([]);
 
   // ensure scaffold rows
@@ -84,7 +87,8 @@ export function IncomesEditor({
     onChange(next);
   };
 
-  const addRow = (freqHint?: Frequency) => onChange([...items, makeBlank(freqHint ?? items.at(-1)?.frequency)]);
+  const addRow = (freqHint?: Frequency) =>
+    onChange([...items, makeBlank(freqHint ?? items.at(-1)?.frequency)]);
   const clearRow = (i: number) => update(i, makeBlank(items[i]?.frequency));
   const removeRow = (i: number) => {
     if (items.length <= minRows) return clearRow(i);
@@ -101,25 +105,27 @@ export function IncomesEditor({
       .map((l) => l.trim())
       .filter(Boolean);
 
-    if (rows.length <= 1) return false; // not a bulk paste
+    if (rows.length <= 1) return false;
 
     const parsed: UIIncomeItem[] = rows.map((l, idx) => {
       const [amtRaw, freqRaw] = l.split(",").map((x) => x?.trim());
       const amt = Number((amtRaw || "").replace(/[^\d.]/g, ""));
       const freqStr = (freqRaw || "").toLowerCase();
-      const freq = (FREQS.includes(freqStr as Frequency) ? (freqStr as Frequency) : items[startIndex + idx]?.frequency) ??
+      const freq =
+        (FREQS.includes(freqStr as Frequency)
+          ? (freqStr as Frequency)
+          : items[startIndex + idx]?.frequency) ??
         items.at(-1)?.frequency ??
         "weekly";
-      return { ...makeBlank(freq), amount: isFinite(amt) && amt > 0 ? amt : "" };
+      const numeric = isFinite(amt) && amt > 0 ? amt : "";
+      return { ...makeBlank(freq), amount: numeric, draft: numeric === "" ? "" : nf.format(numeric as number) };
     });
 
     const next = items.slice();
-    // ensure capacity
     while (startIndex + parsed.length > next.length) next.push(makeBlank(next.at(-1)?.frequency));
     for (let j = 0; j < parsed.length; j++) next[startIndex + j] = { ...next[startIndex + j], ...parsed[j] };
     onChange(next);
 
-    // focus last pasted row's amount
     requestAnimationFrame(() => {
       const idx = startIndex + parsed.length - 1;
       rowRefs.current[idx]?.amount?.focus();
@@ -127,7 +133,6 @@ export function IncomesEditor({
     return true;
   };
 
-  // live totals (optional, small hint under toolbar)
   const summary = useMemo(() => {
     let weekly = 0;
     for (const it of items) {
@@ -148,19 +153,11 @@ export function IncomesEditor({
         <div className="flex items-center gap-3 text-sm">
           <div className="hidden sm:flex items-center gap-1">
             <span className="text-xs text-gray-400">Set all:</span>
-            <button className="underline" type="button" onClick={() => setAllFrequency("weekly")}>
-              Weekly
-            </button>
-            <button className="underline" type="button" onClick={() => setAllFrequency("fortnightly")}>
-              Fortnightly
-            </button>
-            <button className="underline" type="button" onClick={() => setAllFrequency("annual")}>
-              Annual
-            </button>
+            <button className="underline" type="button" onClick={() => setAllFrequency("weekly")}>Weekly</button>
+            <button className="underline" type="button" onClick={() => setAllFrequency("fortnightly")}>Fortnightly</button>
+            <button className="underline" type="button" onClick={() => setAllFrequency("annual")}>Annual</button>
           </div>
-          <button className="underline" type="button" onClick={() => addRow()}>
-            + Add
-          </button>
+          <button className="underline" type="button" onClick={() => addRow()}>+ Add</button>
         </div>
       </div>
 
@@ -176,12 +173,16 @@ export function IncomesEditor({
           const isWeekly = it.frequency === "weekly";
           const isFortnightly = it.frequency === "fortnightly";
 
-          // formatted display value
+          // show the draft if present (preserves "5,555."), else format from numeric amount
           const displayValue =
-            it.amount === ""
+            it.draft !== undefined && it.draft !== ""
+              ? it.draft
+              : it.amount === ""
               ? ""
               : nf.format(Math.trunc(Number(it.amount))) +
-                (Number(it.amount) % 1 !== 0 ? `.${String(Number(it.amount).toFixed(2)).split(".")[1]}` : "");
+                (Number(it.amount) % 1 !== 0
+                  ? `.${String(Number(it.amount).toFixed(2)).split(".")[1]}`
+                  : "");
 
           return (
             <div key={i} className="flex flex-wrap items-center gap-2">
@@ -214,29 +215,33 @@ export function IncomesEditor({
                   const before = raw.slice(0, caret);
                   const digitsBefore = before.replace(/[^0-9]/g, "").length;
                   const wasAfterDot = before.includes(".");
+                  const decimalsBefore = wasAfterDot ? (before.split(".")[1] || "").replace(/\D/g, "").length : 0;
 
                   const { formatted, numeric } = formatWithCommas(raw);
 
-                  // auto-add when typing in the last row
-                  if (i === items.length - 1 && numeric !== "") {
+                  const wasEmpty = items[i].amount === "" && !items[i].draft;
+
+                  // keep draft + numeric together (no DOM mutation!)
+                  update(i, { draft: formatted, amount: numeric === "" ? "" : Number(numeric) });
+
+                  // only auto-add when transitioning empty -> non-empty on the last row
+                  if (i === items.length - 1 && wasEmpty && numeric !== "") {
                     const next = items.slice();
-                    next[i] = { ...next[i], amount: numeric };
+                    next[i] = { ...next[i], draft: formatted, amount: Number(numeric) };
                     onChange([...next, makeBlank(next[i].frequency)]);
-                  } else {
-                    update(i, { amount: numeric });
                   }
 
                   requestAnimationFrame(() => {
                     const node = rowRefs.current[i]?.amount;
-                    if (node) placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot);
-                    if (node && node.value !== formatted) node.value = formatted;
+                    if (!node) return;
+                    placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot, decimalsBefore);
                   });
                 }}
                 onBlur={(e) => {
                   const { numeric } = formatWithCommas(e.currentTarget.value);
-                  if (numeric === "") return update(i, { amount: "" });
+                  if (numeric === "") return update(i, { draft: "", amount: "" });
                   const rounded = Math.round(Number(numeric) * 100) / 100;
-                  update(i, { amount: rounded });
+                  update(i, { draft: "", amount: rounded });
                 }}
                 onKeyDown={(e) => {
                   const k = e.key.toLowerCase();
@@ -245,8 +250,7 @@ export function IncomesEditor({
                   if (k === "a") update(i, { frequency: "annual" });
                   if (k === "escape") {
                     e.preventDefault();
-                    update(i, { amount: "" });
-                    (e.currentTarget as HTMLInputElement).value = "";
+                    update(i, { draft: "", amount: "" });
                   }
                   if (k === "enter") {
                     e.preventDefault();
@@ -283,7 +287,6 @@ export function IncomesEditor({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          // next row focus or create one
                           if (i === items.length - 1) addRow(items[i].frequency);
                           requestAnimationFrame(() => rowRefs.current[i + 1]?.amount?.focus());
                         }
