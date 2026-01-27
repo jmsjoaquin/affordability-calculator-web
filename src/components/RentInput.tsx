@@ -114,25 +114,33 @@ export function RentInput({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium">Rent</label>
-      <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          inputMode="decimal"
-          className="border rounded px-3 py-2 w-40 text-right font-mono tabular-nums"
-          value={draft}
-          onChange={(e) => handleAmountChange(e.target.value)}
-          onBlur={handleBlur}
-          onFocus={() => {
-            if (!draft && value.amount) setDraft(nf.format(value.amount));
-          }}
-          placeholder=""
-          aria-label="Weekly rent"
-        />
+      <label className="block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+        Weekly rent
+      </label>
+      <div className="flex items-center gap-3">
+        <div className="relative w-48">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500 dark:text-neutral-400">
+            $
+          </span>
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="decimal"
+            className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 pl-7 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
+              value={draft}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              onBlur={handleBlur}
+            onFocus={() => {
+              if (!draft && value.amount) setDraft(nf.format(value.amount));
+            }}
+            placeholder="0.00"
+            aria-label="Weekly rent"
+          />
+        </div>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">per week</span>
       </div>
-      <p className="text-sm text-gray-500">
-        Annual Rent (×52): <strong>${nf.format(annual || 0)}</strong>
+      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        Annual rent (×52): <strong className="text-neutral-900 dark:text-neutral-100">${nf.format(annual || 0)}</strong>
       </p>
     </div>
   );

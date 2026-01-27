@@ -23,9 +23,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="rounded border px-3 py-1.5 text-sm
-                 border-[color:var(--foreground)]/20
-                 hover:bg-[color:var(--foreground)]/5"
+      className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-neutral-900/60 dark:hover:bg-neutral-900"
       aria-pressed={mode === "dark"}
       title="Toggle theme"
     >

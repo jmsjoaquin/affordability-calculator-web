@@ -23,18 +23,21 @@ export default function HomePage() {
     { amount: "", frequency: "weekly" }
   );
   const rentForInput = useMemo(() => {
-  const amt = rent.amount === "" ? 0 : Number(rent.amount);
-  return {
-    amount: amt,
-    frequency: rent.frequency,
-    annual: amt * 52, // always ×52
-  };
-}, [rent]);
+    const amt = rent.amount === "" ? 0 : Number(rent.amount);
+    return {
+      amount: amt,
+      frequency: rent.frequency,
+      annual: amt * 52, // always ×52
+    };
+  }, [rent]);
 
-// 3) adapter: map back from RentInput to your UI state
-const handleRentChange = (v: { amount: number; frequency: Frequency; annual: number }) => {
-  setRent({ amount: v.amount, frequency: v.frequency });
-};
+  const handleRentChange = (v: {
+    amount: number;
+    frequency: Frequency;
+    annual: number;
+  }) => {
+    setRent({ amount: v.amount, frequency: v.frequency });
+  };
   const [tenants, setTenants] = useState<UIIncomeItem[]>([]);
   const [others, setOthers] = useState<UIIncomeItem[]>([]);
   const [result, setResult] = useState<CalculateResponse | null>(null);
@@ -91,12 +94,12 @@ const handleRentChange = (v: { amount: number; frequency: Frequency; annual: num
           setErr(null);
         }
       } catch (e: unknown) {
-  const msg =
-    e instanceof Error ? e.message : typeof e === "string" ? e : "Request failed";
-  if (thisReq === reqCounter.current) {
-    setResult(null);
-    setErr(String(msg));
-  }
+        const msg =
+          e instanceof Error ? e.message : typeof e === "string" ? e : "Request failed";
+        if (thisReq === reqCounter.current) {
+          setResult(null);
+          setErr(String(msg));
+        }
       } finally {
         if (thisReq === reqCounter.current) setLoading(false);
       }
@@ -106,53 +109,104 @@ const handleRentChange = (v: { amount: number; frequency: Frequency; annual: num
   }, [payload]);
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold flex items-center justify-between">
-  Affordability Calculator
-  <ThemeToggle />
-</h1>
+    <main className="relative min-h-screen overflow-x-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-32 right-[-10%] h-72 w-72 rounded-full bg-amber-300/40 blur-3xl dark:bg-amber-500/20" />
+        <div className="absolute -bottom-40 left-[-5%] h-96 w-96 rounded-full bg-teal-300/30 blur-3xl dark:bg-teal-500/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.98),transparent_60%)] dark:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,244,230,0.6),transparent_45%)] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.03),transparent_55%)]" />
+      </div>
 
-      <div>
-        {/* LEFT column: inputs */}
-        <section >
-          <RentInput value={rentForInput} onChange={handleRentChange} />
+      <div className="mx-auto max-w-6xl px-6 py-12 space-y-10">
+        <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-2">
+            <span className="inline-flex items-center rounded-full border border-amber-300/80 bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-amber-800 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+              Affordability
+            </span>
+            <h1 className="text-3xl md:text-4xl font-semibold leading-tight text-neutral-950 dark:text-neutral-100">
+              Rent Affordability Calculator
+            </h1>
+            <p className="max-w-xl text-sm text-neutral-700 dark:text-neutral-300">
+              Add weekly rent and income streams to see annual totals and your affordability
+              band in real time.
+            </p>
+          </div>
+          <div />
+        </header>
 
-          {/* Tenants */}
-          <div className="rounded max-h-[30vh] overflow-y-auto overflow-x-hidden overscroll-contain">
-            <IncomesEditor
-              label="Applicant"
-              items={tenants}
-              onChange={setTenants}
-              rowPrefix="Applicant"
-              placeholder="Net Salary"
-              minRows={3}
-            />
+        <div className="space-y-8">
+          <section className="rounded-3xl border border-black/10 bg-white/90 p-6 shadow-[0_22px_60px_-40px_rgba(60,38,20,0.35)] backdrop-blur dark:border-white/10 dark:bg-neutral-900/70">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-amber-600/90 dark:text-amber-300/90">
+                  Inputs
+                </p>
+                <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                  Rent & income
+                </h2>
+              </div>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                Auto-calculates as you type
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-6">
+              <div className="rounded-2xl border border-black/10 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-neutral-950/50">
+                <RentInput value={rentForInput} onChange={handleRentChange} />
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-2xl border border-black/10 bg-white/90 p-4 shadow-sm dark:border-white/10 dark:bg-neutral-950/50">
+                  <IncomesEditor
+                    label="Applicant"
+                    items={tenants}
+                    onChange={setTenants}
+                    rowPrefix="Applicant"
+                    placeholder="Net Salary"
+                    minRows={3}
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-black/10 bg-white/90 p-4 shadow-sm dark:border-white/10 dark:bg-neutral-950/50">
+                  <IncomesEditor
+                    label="Other incomes"
+                    items={others}
+                    onChange={setOthers}
+                    rowPrefix="Other Income"
+                    placeholder="Other income"
+                    minRows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 text-sm">
+                {loading && (
+                  <div className="text-amber-700/90 dark:text-amber-300/90">
+                    Calculating…
+                  </div>
+                )}
+                {err && <div className="text-red-600 dark:text-red-400">{err}</div>}
+                {!canCompute && (
+                  <div className="text-neutral-500 dark:text-neutral-400">
+                    Enter a rent amount to see results.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+              Summary
+            </h2>
+            <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">Annualized</span>
           </div>
 
-          {/* Other incomes */}
-          <div className="rounded max-h-[30vh] overflow-y-auto overflow-x-hidden overscroll-contain">
-            <IncomesEditor
-              label="Other incomes"
-              items={others}
-              onChange={setOthers}
-              rowPrefix="Other Income"
-              placeholder="Other income"
-              minRows={3}
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <TotalsPanel totals={result?.totals ?? null} />
+            <AffordabilityCard a={result?.affordability ?? null} />
           </div>
-
-          {/* Live status */}
-          {loading && <div className="text-sm text-gray-500">Calculating…</div>}
-          {err && <div className="text-red-600 text-sm">{err}</div>}
-          {!canCompute && (
-            <div className="text-sm text-gray-500">Enter a rent amount to see results.</div>
-          )}
-        </section>
-
-        {/* RIGHT column: results — always shown */}
-        <div className="grid gap-4 md:grid-cols-2 p-2 ">
-          <TotalsPanel totals={result?.totals ?? null} />
-          <AffordabilityCard a={result?.affordability ?? null} />
         </div>
       </div>
     </main>

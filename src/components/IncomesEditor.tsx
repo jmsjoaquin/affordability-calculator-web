@@ -146,28 +146,58 @@ export function IncomesEditor({
   }, [items]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Header + quick actions */}
-      <div className="flex items-center justify-between gap-3">
-        <label className="text-sm font-medium">{label}</label>
-        <div className="flex items-center gap-3 text-sm">
-          <div className="hidden sm:flex items-center gap-1">
-            <span className="text-xs text-gray-400">Set all:</span>
-            <button className="underline" type="button" onClick={() => setAllFrequency("weekly")}>Weekly</button>
-            <button className="underline" type="button" onClick={() => setAllFrequency("fortnightly")}>Fortnightly</button>
-            <button className="underline" type="button" onClick={() => setAllFrequency("annual")}>Annual</button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <label className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+          {label}
+        </label>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-black/10 bg-neutral-100/80 px-2 py-1 text-[11px] text-neutral-600 shadow-sm dark:border-white/10 dark:bg-neutral-900/60 dark:text-neutral-300">
+            <span className="uppercase tracking-[0.2em] text-[10px]">Set all</span>
+            <button
+              className="rounded-full px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+              type="button"
+              onClick={() => setAllFrequency("weekly")}
+            >
+              Weekly
+            </button>
+            <button
+              className="rounded-full px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+              type="button"
+              onClick={() => setAllFrequency("fortnightly")}
+            >
+              Fortnightly
+            </button>
+            <button
+              className="rounded-full px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+              type="button"
+              onClick={() => setAllFrequency("annual")}
+            >
+              Annual
+            </button>
           </div>
-          <button className="underline" type="button" onClick={() => addRow()}>+ Add</button>
+          <button
+            className="inline-flex items-center rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-neutral-900/70 dark:hover:bg-neutral-900"
+            type="button"
+            onClick={() => addRow()}
+          >
+            + Add
+          </button>
         </div>
       </div>
 
       {/* Tiny live summary */}
-      <div className="text-xs text-gray-400">
-        ≈ Weekly total: <span className="tabular-nums font-mono">{nf.format(Math.round(summary.weekly * 100) / 100)}</span>{" "}
-        • Annual total: <span className="tabular-nums font-mono">{nf.format(Math.round(summary.annual))}</span>
+      <div className="text-xs text-neutral-500 dark:text-neutral-400">
+        ≈ Weekly total:{" "}
+        <span className="tabular-nums font-mono">
+          {nf.format(Math.round(summary.weekly * 100) / 100)}
+        </span>{" "}
+        • Annual total:{" "}
+        <span className="tabular-nums font-mono">{nf.format(Math.round(summary.annual))}</span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {items.map((it, i) => {
           const isAnnual = it.frequency === "annual";
           const isWeekly = it.frequency === "weekly";
@@ -185,157 +215,170 @@ export function IncomesEditor({
                   : "");
 
           return (
-            <div key={i} className="flex flex-wrap items-center gap-2">
-              <span className="w-24 text-center text-xs text-gray-400 select-none">{rowPrefix} {i + 1}</span>
+            <div
+              key={i}
+              className="rounded-2xl border border-black/10 bg-white/85 px-3 py-3 shadow-sm transition-shadow hover:shadow-md dark:border-white/10 dark:bg-neutral-900/50"
+            >
+              <div className="space-y-2">
+                <span className="text-left text-[10px] uppercase tracking-[0.2em] text-neutral-400 select-none">
+                  {rowPrefix} {i + 1}
+                </span>
 
-              {/* amount */}
-              <input
-                ref={(el) => {
-                  rowRefs.current[i] ||= { amount: null, freq: null };
-                  rowRefs.current[i].amount = el;
-                }}
-                type="text"
-                inputMode="decimal"
-                className="border rounded px-3 py-2 w-40 text-right font-mono tabular-nums"
-                value={displayValue}
-                placeholder={isAnnual ? "Annual" : placeholder}
-                aria-label={`${rowPrefix} ${i + 1} ${isAnnual ? "Annual" : placeholder}`}
-                aria-keyshortcuts="Enter,W,F,A"
-                onPaste={(e) => {
-                  const text = e.clipboardData.getData("text");
-                  if (text.includes("\n")) {
-                    e.preventDefault();
-                    handleBulkPaste(i, text);
-                  }
-                }}
-                onChange={(e) => {
-                  const el = e.currentTarget;
-                  const raw = el.value;
-                  const caret = el.selectionStart ?? raw.length;
-                  const before = raw.slice(0, caret);
-                  const digitsBefore = before.replace(/[^0-9]/g, "").length;
-                  const wasAfterDot = before.includes(".");
-                  const decimalsBefore = wasAfterDot ? (before.split(".")[1] || "").replace(/\D/g, "").length : 0;
+                <div className="grid gap-3 sm:grid-cols-[minmax(180px,220px)_auto] sm:items-center">
+                  {/* amount */}
+                  <input
+                    ref={(el) => {
+                      rowRefs.current[i] ||= { amount: null, freq: null };
+                      rowRefs.current[i].amount = el;
+                    }}
+                    type="text"
+                    inputMode="decimal"
+                    className="w-full rounded-xl border border-black/15 bg-amber-50/80 px-3 py-2 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-950/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
+                    value={displayValue}
+                    placeholder={isAnnual ? "Annual" : placeholder}
+                    aria-label={`${rowPrefix} ${i + 1} ${isAnnual ? "Annual" : placeholder}`}
+                    aria-keyshortcuts="Enter,W,F,A"
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData("text");
+                      if (text.includes("\n")) {
+                        e.preventDefault();
+                        handleBulkPaste(i, text);
+                      }
+                    }}
+                    onChange={(e) => {
+                      const el = e.currentTarget;
+                      const raw = el.value;
+                      const caret = el.selectionStart ?? raw.length;
+                      const before = raw.slice(0, caret);
+                      const digitsBefore = before.replace(/[^0-9]/g, "").length;
+                      const wasAfterDot = before.includes(".");
+                      const decimalsBefore = wasAfterDot ? (before.split(".")[1] || "").replace(/\D/g, "").length : 0;
 
-                  const { formatted, numeric } = formatWithCommas(raw);
+                      const { formatted, numeric } = formatWithCommas(raw);
 
-                  const wasEmpty = items[i].amount === "" && !items[i].draft;
+                      const wasEmpty = items[i].amount === "" && !items[i].draft;
 
-                  // keep draft + numeric together (no DOM mutation!)
-                  update(i, { draft: formatted, amount: numeric === "" ? "" : Number(numeric) });
+                      // keep draft + numeric together (no DOM mutation!)
+                      update(i, { draft: formatted, amount: numeric === "" ? "" : Number(numeric) });
 
-                  // only auto-add when transitioning empty -> non-empty on the last row
-                  if (i === items.length - 1 && wasEmpty && numeric !== "") {
-                    const next = items.slice();
-                    next[i] = { ...next[i], draft: formatted, amount: Number(numeric) };
-                    onChange([...next, makeBlank(next[i].frequency)]);
-                  }
+                      // only auto-add when transitioning empty -> non-empty on the last row
+                      if (i === items.length - 1 && wasEmpty && numeric !== "") {
+                        const next = items.slice();
+                        next[i] = { ...next[i], draft: formatted, amount: Number(numeric) };
+                        onChange([...next, makeBlank(next[i].frequency)]);
+                      }
 
-                  requestAnimationFrame(() => {
-                    const node = rowRefs.current[i]?.amount;
-                    if (!node) return;
-                    placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot, decimalsBefore);
-                  });
-                }}
-                onBlur={(e) => {
-                  const { numeric } = formatWithCommas(e.currentTarget.value);
-                  if (numeric === "") return update(i, { draft: "", amount: "" });
-                  const rounded = Math.round(Number(numeric) * 100) / 100;
-                  update(i, { draft: "", amount: rounded });
-                }}
-                onKeyDown={(e) => {
-                  const k = e.key.toLowerCase();
-                  if (k === "w") update(i, { frequency: "weekly" });
-                  if (k === "f") update(i, { frequency: "fortnightly" });
-                  if (k === "a") update(i, { frequency: "annual" });
-                  if (k === "escape") {
-                    e.preventDefault();
-                    update(i, { draft: "", amount: "" });
-                  }
-                  if (k === "enter") {
-                    e.preventDefault();
-                    rowRefs.current[i]?.freq?.querySelector<HTMLButtonElement>("button[aria-pressed='true']")?.focus();
-                  }
-                }}
-              />
+                      requestAnimationFrame(() => {
+                        const node = rowRefs.current[i]?.amount;
+                        if (!node) return;
+                        placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot, decimalsBefore);
+                      });
+                    }}
+                    onBlur={(e) => {
+                      const { numeric } = formatWithCommas(e.currentTarget.value);
+                      if (numeric === "") return update(i, { draft: "", amount: "" });
+                      const rounded = Math.round(Number(numeric) * 100) / 100;
+                      update(i, { draft: "", amount: rounded });
+                    }}
+                    onKeyDown={(e) => {
+                      const k = e.key.toLowerCase();
+                      if (k === "w") update(i, { frequency: "weekly" });
+                      if (k === "f") update(i, { frequency: "fortnightly" });
+                      if (k === "a") update(i, { frequency: "annual" });
+                      if (k === "escape") {
+                        e.preventDefault();
+                        update(i, { draft: "", amount: "" });
+                      }
+                      if (k === "enter") {
+                        e.preventDefault();
+                        rowRefs.current[i]?.freq
+                          ?.querySelector<HTMLButtonElement>("button[aria-pressed='true']")
+                          ?.focus();
+                      }
+                    }}
+                  />
 
-              {/* frequency segmented (W/F/A) */}
-              <div
-                ref={(el) => {
-                  rowRefs.current[i] ||= { amount: null, freq: null };
-                  rowRefs.current[i].freq = el;
-                }}
-                className="inline-flex rounded-md border overflow-hidden"
-                role="group"
-                aria-label={`${rowPrefix} ${i + 1} frequency`}
-              >
-                {FREQS.map((opt, idx) => {
-                  const active = it.frequency === opt;
-                  const label = opt === "weekly" ? "Weekly" : opt === "fortnightly" ? "Fortnightly" : "Annual";
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      className={[
-                        "px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 transition-colors",
-                        active ? "bg-gray-900 text-white" : "bg-white text-gray-700 hover:bg-gray-100",
-                        idx > 0 ? "border-l" : "",
-                      ].join(" ")}
-                      aria-pressed={active}
-                      aria-label={opt}
-                      onClick={() => update(i, { frequency: opt })}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          if (i === items.length - 1) addRow(items[i].frequency);
-                          requestAnimationFrame(() => rowRefs.current[i + 1]?.amount?.focus());
-                        }
-                        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                          e.preventDefault();
-                          const dir = e.key === "ArrowRight" ? 1 : -1;
-                          const idxNow = FREQS.indexOf(it.frequency);
-                          const next = (idxNow + dir + FREQS.length) % FREQS.length;
-                          update(i, { frequency: FREQS[next] });
-                        }
-                        const k = e.key.toLowerCase();
-                        if (k === "w") update(i, { frequency: "weekly" });
-                        if (k === "f") update(i, { frequency: "fortnightly" });
-                        if (k === "a") update(i, { frequency: "annual" });
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+                  {/* frequency segmented (W/F/A) */}
+                  <div
+                    ref={(el) => {
+                      rowRefs.current[i] ||= { amount: null, freq: null };
+                      rowRefs.current[i].freq = el;
+                    }}
+                  className="inline-flex overflow-hidden rounded-xl border border-black/15 bg-amber-50/60 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
+                  role="group"
+                  aria-label={`${rowPrefix} ${i + 1} frequency`}
+                >
+                  {FREQS.map((opt, idx) => {
+                    const active = it.frequency === opt;
+                    const label = opt === "weekly" ? "Weekly" : opt === "fortnightly" ? "Fortnightly" : "Annual";
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={[
+                          "w-20 px-2 py-1.5 text-[10px] font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 transition-colors",
+                          active
+                            ? "bg-amber-500 text-white"
+                            : "bg-transparent text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10",
+                            idx > 0 ? "border-l border-black/10 dark:border-white/10" : "",
+                          ].join(" ")}
+                          aria-pressed={active}
+                          aria-label={opt}
+                          onClick={() => update(i, { frequency: opt })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (i === items.length - 1) addRow(items[i].frequency);
+                              requestAnimationFrame(() => rowRefs.current[i + 1]?.amount?.focus());
+                            }
+                            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                              e.preventDefault();
+                              const dir = e.key === "ArrowRight" ? 1 : -1;
+                              const idxNow = FREQS.indexOf(it.frequency);
+                              const next = (idxNow + dir + FREQS.length) % FREQS.length;
+                              update(i, { frequency: FREQS[next] });
+                            }
+                            const k = e.key.toLowerCase();
+                            if (k === "w") update(i, { frequency: "weekly" });
+                            if (k === "f") update(i, { frequency: "fortnightly" });
+                            if (k === "a") update(i, { frequency: "annual" });
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {/* tiny computed chips */}
-              <span className="text-xs text-gray-500">
-                {isAnnual && typeof it.amount === "number" && `≈ ${Math.round((it.amount / 52) * 100) / 100} weekly`}
-                {isWeekly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 52 * 100) / 100} annual`}
-                {isFortnightly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 26 * 100) / 100} annual`}
-              </span>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {isAnnual && typeof it.amount === "number" && `≈ ${Math.round((it.amount / 52) * 100) / 100} weekly`}
+                  {isWeekly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 52 * 100) / 100} annual`}
+                  {isFortnightly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 26 * 100) / 100} annual`}
+                </span>
 
-              {/* row actions */}
-              <div className="ml-auto flex items-center gap-1">
-                <button
-                  type="button"
-                  className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
-                  onClick={() => clearRow(i)}
-                  aria-label={`Clear ${rowPrefix} ${i + 1}`}
-                  title="Clear row (Esc inside input also clears)"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                  onClick={() => removeRow(i)}
-                  aria-label={`Remove ${rowPrefix} ${i + 1}`}
-                  title="Remove row"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="rounded-full px-2.5 py-1 text-xs text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10"
+                    onClick={() => clearRow(i)}
+                    aria-label={`Clear ${rowPrefix} ${i + 1}`}
+                    title="Clear row (Esc inside input also clears)"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                    onClick={() => removeRow(i)}
+                    aria-label={`Remove ${rowPrefix} ${i + 1}`}
+                    title="Remove row"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             </div>
           );
