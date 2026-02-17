@@ -12,16 +12,23 @@ import type {
   Frequency,
   IncomeItem,
 } from "@/lib/types";
-import { ThemeToggle } from "@/components/ThemeToggle";
 // UI shape that matches IncomesEditor (amount can be "")
 type UIIncomeItem = Omit<IncomeItem, "amount"> & { amount: number | "" };
 
 const DEBOUNCE_MS = 350;
+const CURRENCIES = [
+  { code: "USD", symbol: "$", label: "USD ($)" },
+  { code: "PHP", symbol: "₱", label: "PHP (₱)" },
+  { code: "EUR", symbol: "€", label: "EUR (€)" },
+  { code: "GBP", symbol: "£", label: "GBP (£)" },
+  { code: "AUD", symbol: "A$", label: "AUD (A$)" },
+];
 
 export default function HomePage() {
   const [rent, setRent] = useState<{ amount: number | ""; frequency: Frequency }>(
     { amount: "", frequency: "weekly" }
   );
+  const [currency, setCurrency] = useState(CURRENCIES[0]);
   const rentForInput = useMemo(() => {
     const amt = rent.amount === "" ? 0 : Number(rent.amount);
     return {
@@ -120,9 +127,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-6xl px-6 py-12 space-y-10">
         <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
-            <span className="inline-flex items-center rounded-full border border-amber-300/80 bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-amber-800 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-              Affordability
-            </span>
+           
             <h1 className="text-3xl md:text-4xl font-semibold leading-tight text-neutral-950 dark:text-neutral-100">
               Rent Affordability Calculator
             </h1>
@@ -131,8 +136,7 @@ export default function HomePage() {
               band in real time.
             </p>
           </div>
-          <div />
-        </header>
+          </header>
 
         <div className="space-y-8">
           <section className="rounded-3xl border border-black/10 bg-white/90 p-6 shadow-[0_22px_60px_-40px_rgba(60,38,20,0.35)] backdrop-blur dark:border-white/10 dark:bg-neutral-900/70">
@@ -151,8 +155,16 @@ export default function HomePage() {
             </div>
 
             <div className="mt-6 space-y-6">
-              <div className="rounded-2xl border border-black/10 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-neutral-950/50">
-                <RentInput value={rentForInput} onChange={handleRentChange} />
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-black/10 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-neutral-950/50">
+                  <RentInput
+                    value={rentForInput}
+                    onChange={handleRentChange}
+                    currencySymbol={currency.symbol}
+                  />
+                </div>
+                <TotalsPanel totals={result?.totals ?? null} currencySymbol={currency.symbol} />
+                <AffordabilityCard a={result?.affordability ?? null} />
               </div>
 
               <div className="grid gap-6 lg:grid-cols-2">
@@ -194,19 +206,6 @@ export default function HomePage() {
               </div>
             </div>
           </section>
-
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-              Summary
-            </h2>
-            <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">Annualized</span>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <TotalsPanel totals={result?.totals ?? null} />
-            <AffordabilityCard a={result?.affordability ?? null} />
-          </div>
         </div>
       </div>
     </main>

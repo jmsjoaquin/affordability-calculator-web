@@ -45,9 +45,11 @@ function placeCaretFromDigitCount(
 export function RentInput({
   value,
   onChange,
+  currencySymbol = "$",
 }: {
   value: { amount: number; frequency: Frequency; annual: number };
   onChange: (v: { amount: number; frequency: Frequency; annual: number }) => void;
+  currencySymbol?: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -120,7 +122,7 @@ export function RentInput({
       <div className="flex items-center gap-3">
         <div className="relative w-48">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500 dark:text-neutral-400">
-            $
+            {currencySymbol}
           </span>
             <input
               ref={inputRef}
@@ -140,7 +142,11 @@ export function RentInput({
         <span className="text-xs text-neutral-500 dark:text-neutral-400">per week</span>
       </div>
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-        Annual rent (×52): <strong className="text-neutral-900 dark:text-neutral-100">${nf.format(annual || 0)}</strong>
+        Annual rent (×52):{" "}
+        <strong className="text-neutral-900 dark:text-neutral-100">
+          {currencySymbol}
+          {nf.format(annual || 0)}
+        </strong>
       </p>
     </div>
   );

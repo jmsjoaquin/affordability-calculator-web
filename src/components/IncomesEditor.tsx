@@ -89,9 +89,8 @@ export function IncomesEditor({
 
   const addRow = (freqHint?: Frequency) =>
     onChange([...items, makeBlank(freqHint ?? items.at(-1)?.frequency)]);
-  const clearRow = (i: number) => update(i, makeBlank(items[i]?.frequency));
   const removeRow = (i: number) => {
-    if (items.length <= minRows) return clearRow(i);
+    if (items.length <= minRows) return;
     onChange(items.filter((_, idx) => idx !== i));
   };
 
@@ -217,8 +216,18 @@ export function IncomesEditor({
           return (
             <div
               key={i}
-              className="rounded-2xl border border-black/10 bg-white/85 px-3 py-3 shadow-sm transition-shadow hover:shadow-md dark:border-white/10 dark:bg-neutral-900/50"
+              className="relative rounded-2xl border border-black/10 bg-white/85 px-3 py-3 shadow-sm transition-shadow hover:shadow-md dark:border-white/10 dark:bg-neutral-900/50"
             >
+              <button
+                type="button"
+                className="absolute right-2 top-2 rounded-full px-2 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                onClick={() => removeRow(i)}
+                aria-label={`Remove ${rowPrefix} ${i + 1}`}
+                title="Remove row"
+              >
+                ✕
+              </button>
+
               <div className="space-y-2">
                 <span className="text-left text-[10px] uppercase tracking-[0.2em] text-neutral-400 select-none">
                   {rowPrefix} {i + 1}
@@ -226,77 +235,75 @@ export function IncomesEditor({
 
                 <div className="grid gap-3 sm:grid-cols-[minmax(180px,220px)_auto] sm:items-center">
                   {/* amount */}
-                  <input
-                    ref={(el) => {
-                      rowRefs.current[i] ||= { amount: null, freq: null };
-                      rowRefs.current[i].amount = el;
-                    }}
-                    type="text"
-                    inputMode="decimal"
-                    className="w-full rounded-xl border border-black/15 bg-amber-50/80 px-3 py-2 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-950/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
-                    value={displayValue}
-                    placeholder={isAnnual ? "Annual" : placeholder}
-                    aria-label={`${rowPrefix} ${i + 1} ${isAnnual ? "Annual" : placeholder}`}
-                    aria-keyshortcuts="Enter,W,F,A"
-                    onPaste={(e) => {
-                      const text = e.clipboardData.getData("text");
-                      if (text.includes("\n")) {
-                        e.preventDefault();
-                        handleBulkPaste(i, text);
-                      }
-                    }}
-                    onChange={(e) => {
-                      const el = e.currentTarget;
-                      const raw = el.value;
-                      const caret = el.selectionStart ?? raw.length;
-                      const before = raw.slice(0, caret);
-                      const digitsBefore = before.replace(/[^0-9]/g, "").length;
-                      const wasAfterDot = before.includes(".");
-                      const decimalsBefore = wasAfterDot ? (before.split(".")[1] || "").replace(/\D/g, "").length : 0;
+                  <div className="relative">
+                    <input
+                      ref={(el) => {
+                        rowRefs.current[i] ||= { amount: null, freq: null };
+                        rowRefs.current[i].amount = el;
+                      }}
+                      type="text"
+                      inputMode="decimal"
+                      className="w-full rounded-xl border border-black/15 bg-amber-50/80 px-3 py-2 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-950/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
+                      value={displayValue}
+                      placeholder={isAnnual ? "Annual" : placeholder}
+                      aria-label={`${rowPrefix} ${i + 1} ${isAnnual ? "Annual" : placeholder}`}
+                      aria-keyshortcuts="Enter,W,F,A"
+                      onPaste={(e) => {
+                        const text = e.clipboardData.getData("text");
+                        if (text.includes("\n")) {
+                          e.preventDefault();
+                          handleBulkPaste(i, text);
+                        }
+                      }}
+                      onChange={(e) => {
+                        const el = e.currentTarget;
+                        const raw = el.value;
+                        const caret = el.selectionStart ?? raw.length;
+                        const before = raw.slice(0, caret);
+                        const digitsBefore = before.replace(/[^0-9]/g, "").length;
+                        const wasAfterDot = before.includes(".");
+                        const decimalsBefore = wasAfterDot ? (before.split(".")[1] || "").replace(/\D/g, "").length : 0;
 
-                      const { formatted, numeric } = formatWithCommas(raw);
+                        const { formatted, numeric } = formatWithCommas(raw);
 
-                      const wasEmpty = items[i].amount === "" && !items[i].draft;
+                        const wasEmpty = items[i].amount === "" && !items[i].draft;
 
-                      // keep draft + numeric together (no DOM mutation!)
-                      update(i, { draft: formatted, amount: numeric === "" ? "" : Number(numeric) });
+                        // keep draft + numeric together (no DOM mutation!)
+                        update(i, { draft: formatted, amount: numeric === "" ? "" : Number(numeric) });
 
-                      // only auto-add when transitioning empty -> non-empty on the last row
-                      if (i === items.length - 1 && wasEmpty && numeric !== "") {
-                        const next = items.slice();
-                        next[i] = { ...next[i], draft: formatted, amount: Number(numeric) };
-                        onChange([...next, makeBlank(next[i].frequency)]);
-                      }
+                        // only auto-add when transitioning empty -> non-empty on the last row
+                        if (i === items.length - 1 && wasEmpty && numeric !== "") {
+                          const next = items.slice();
+                          next[i] = { ...next[i], draft: formatted, amount: Number(numeric) };
+                          onChange([...next, makeBlank(next[i].frequency)]);
+                        }
 
-                      requestAnimationFrame(() => {
-                        const node = rowRefs.current[i]?.amount;
-                        if (!node) return;
-                        placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot, decimalsBefore);
-                      });
-                    }}
-                    onBlur={(e) => {
-                      const { numeric } = formatWithCommas(e.currentTarget.value);
-                      if (numeric === "") return update(i, { draft: "", amount: "" });
-                      const rounded = Math.round(Number(numeric) * 100) / 100;
-                      update(i, { draft: "", amount: rounded });
-                    }}
-                    onKeyDown={(e) => {
-                      const k = e.key.toLowerCase();
-                      if (k === "w") update(i, { frequency: "weekly" });
-                      if (k === "f") update(i, { frequency: "fortnightly" });
-                      if (k === "a") update(i, { frequency: "annual" });
-                      if (k === "escape") {
-                        e.preventDefault();
-                        update(i, { draft: "", amount: "" });
-                      }
-                      if (k === "enter") {
-                        e.preventDefault();
-                        rowRefs.current[i]?.freq
-                          ?.querySelector<HTMLButtonElement>("button[aria-pressed='true']")
-                          ?.focus();
-                      }
-                    }}
-                  />
+                        requestAnimationFrame(() => {
+                          const node = rowRefs.current[i]?.amount;
+                          if (!node) return;
+                          placeCaretFromDigitCount(node, formatted, digitsBefore, wasAfterDot, decimalsBefore);
+                        });
+                      }}
+                      onBlur={(e) => {
+                        const { numeric } = formatWithCommas(e.currentTarget.value);
+                        if (numeric === "") return update(i, { draft: "", amount: "" });
+                        const rounded = Math.round(Number(numeric) * 100) / 100;
+                        update(i, { draft: "", amount: rounded });
+                      }}
+                      onKeyDown={(e) => {
+                        const k = e.key.toLowerCase();
+                        if (k === "w") update(i, { frequency: "weekly" });
+                        if (k === "f") update(i, { frequency: "fortnightly" });
+                        if (k === "a") update(i, { frequency: "annual" });
+                        if (k === "enter") {
+                          e.preventDefault();
+                          rowRefs.current[i]?.freq
+                            ?.querySelector<HTMLButtonElement>("button[aria-pressed='true']")
+                            ?.focus();
+                        }
+                      }}
+                    />
+                  </div>
 
                   {/* frequency segmented (W/F/A) */}
                   <div
@@ -352,33 +359,12 @@ export function IncomesEditor({
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="mt-2">
                 <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   {isAnnual && typeof it.amount === "number" && `≈ ${Math.round((it.amount / 52) * 100) / 100} weekly`}
                   {isWeekly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 52 * 100) / 100} annual`}
                   {isFortnightly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 26 * 100) / 100} annual`}
                 </span>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="rounded-full px-2.5 py-1 text-xs text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10"
-                    onClick={() => clearRow(i)}
-                    aria-label={`Clear ${rowPrefix} ${i + 1}`}
-                    title="Clear row (Esc inside input also clears)"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-full px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
-                    onClick={() => removeRow(i)}
-                    aria-label={`Remove ${rowPrefix} ${i + 1}`}
-                    title="Remove row"
-                  >
-                    ✕
-                  </button>
-                </div>
               </div>
             </div>
           );

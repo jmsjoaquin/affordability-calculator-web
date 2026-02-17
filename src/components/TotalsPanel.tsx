@@ -8,7 +8,13 @@ const fmt = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-export function TotalsPanel({ totals }: { totals: Totals | null }) {
+export function TotalsPanel({
+  totals,
+  currencySymbol = "$",
+}: {
+  totals: Totals | null;
+  currencySymbol?: string;
+}) {
   const [copied, setCopied] = useState<"income" | "rent" | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -19,7 +25,7 @@ export function TotalsPanel({ totals }: { totals: Totals | null }) {
   }, []);
 
   const handleCopy = async (value: number, kind: "income" | "rent") => {
-    const text = `$${fmt.format(value || 0)}`;
+    const text = `${currencySymbol}${fmt.format(value || 0)}`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -78,7 +84,8 @@ export function TotalsPanel({ totals }: { totals: Totals | null }) {
               </button>
             </div>
             <div className="mt-1 text-lg font-semibold tabular-nums">
-              ${fmt.format(totals.annual_income || 0)}
+              {currencySymbol}
+              {fmt.format(totals.annual_income || 0)}
             </div>
           </div>
 
@@ -117,7 +124,8 @@ export function TotalsPanel({ totals }: { totals: Totals | null }) {
               </button>
             </div>
             <div className="mt-1 text-lg font-semibold tabular-nums">
-              ${fmt.format(totals.annual_rent || 0)}
+              {currencySymbol}
+              {fmt.format(totals.annual_rent || 0)}
             </div>
           </div>
         </div>
