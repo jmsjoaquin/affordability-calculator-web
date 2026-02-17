@@ -28,7 +28,7 @@ export default function HomePage() {
   const [rent, setRent] = useState<{ amount: number | ""; frequency: Frequency }>(
     { amount: "", frequency: "weekly" }
   );
-  const [currency, setCurrency] = useState(CURRENCIES[0]);
+  const currency = CURRENCIES[0];
   const rentForInput = useMemo(() => {
     const amt = rent.amount === "" ? 0 : Number(rent.amount);
     return {
