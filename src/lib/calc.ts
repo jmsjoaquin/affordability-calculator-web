@@ -6,16 +6,7 @@ import type {
   Totals,
   Affordability,
 } from "@/lib/types";
-
-const WEEKS_PER_YEAR = 52;
-const FORTNIGHTS_PER_YEAR = 26;
-
-function toAnnual(amount: number, freq: Frequency): number {
-  if (!Number.isFinite(amount)) return 0;
-  if (freq === "weekly") return amount * WEEKS_PER_YEAR;
-  if (freq === "fortnightly") return amount * FORTNIGHTS_PER_YEAR;
-  return amount; // already annual
-}
+import { WEEKS_PER_YEAR, toAnnual } from "@/lib/frequency";
 
 function sumAnnual(items: { amount: number; frequency: Frequency }[]): number {
   return items.reduce((acc, it) => acc + toAnnual(it.amount, it.frequency), 0);

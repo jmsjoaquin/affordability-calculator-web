@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useMemo, useRef } from "react";
 import type { IncomeItem, Frequency } from "@/lib/types";
+import { FREQUENCIES, getFrequencyLabel, toAnnual, toWeekly } from "@/lib/frequency";
 
-const FREQS: Frequency[] = ["weekly", "fortnightly", "annual"];
+const FREQS: Frequency[] = FREQUENCIES;
 type UIIncomeItem = Omit<IncomeItem, "amount"> & {
   amount: number | "";
   draft?: string; // <- keeps exact typed text during editing
@@ -136,9 +137,7 @@ export function IncomesEditor({
     let weekly = 0;
     for (const it of items) {
       if (typeof it.amount !== "number") continue;
-      if (it.frequency === "weekly") weekly += it.amount;
-      else if (it.frequency === "fortnightly") weekly += it.amount / 2;
-      else weekly += it.amount / 52;
+      weekly += toWeekly(it.amount, it.frequency);
     }
     const annual = weekly * 52;
     return { weekly, annual };
@@ -167,6 +166,13 @@ export function IncomesEditor({
               onClick={() => setAllFrequency("fortnightly")}
             >
               Fortnightly
+            </button>
+            <button
+              className="rounded-full px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+              type="button"
+              onClick={() => setAllFrequency("monthly")}
+            >
+              Monthly
             </button>
             <button
               className="rounded-full px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
@@ -201,6 +207,7 @@ export function IncomesEditor({
           const isAnnual = it.frequency === "annual";
           const isWeekly = it.frequency === "weekly";
           const isFortnightly = it.frequency === "fortnightly";
+          const isMonthly = it.frequency === "monthly";
 
           // show the draft if present (preserves "5,555."), else format from numeric amount
           const displayValue =
@@ -247,7 +254,7 @@ export function IncomesEditor({
                       value={displayValue}
                       placeholder={isAnnual ? "Annual" : placeholder}
                       aria-label={`${rowPrefix} ${i + 1} ${isAnnual ? "Annual" : placeholder}`}
-                      aria-keyshortcuts="Enter,W,F,A"
+                      aria-keyshortcuts="Enter,W,F,M,A"
                       onPaste={(e) => {
                         const text = e.clipboardData.getData("text");
                         if (text.includes("\n")) {
@@ -294,6 +301,7 @@ export function IncomesEditor({
                         const k = e.key.toLowerCase();
                         if (k === "w") update(i, { frequency: "weekly" });
                         if (k === "f") update(i, { frequency: "fortnightly" });
+                        if (k === "m") update(i, { frequency: "monthly" });
                         if (k === "a") update(i, { frequency: "annual" });
                         if (k === "enter") {
                           e.preventDefault();
@@ -305,29 +313,28 @@ export function IncomesEditor({
                     />
                   </div>
 
-                  {/* frequency segmented (W/F/A) */}
+                  {/* frequency segmented (W/F/M/A) */}
                   <div
                     ref={(el) => {
                       rowRefs.current[i] ||= { amount: null, freq: null };
                       rowRefs.current[i].freq = el;
                     }}
-                  className="inline-flex overflow-hidden rounded-xl border border-black/15 bg-amber-50/60 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
-                  role="group"
-                  aria-label={`${rowPrefix} ${i + 1} frequency`}
-                >
-                  {FREQS.map((opt, idx) => {
-                    const active = it.frequency === opt;
-                    const label = opt === "weekly" ? "Weekly" : opt === "fortnightly" ? "Fortnightly" : "Annual";
-                    return (
-                      <button
-                        key={opt}
-                        type="button"
-                        className={[
-                          "w-20 px-2 py-1.5 text-[10px] font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 transition-colors",
-                          active
-                            ? "bg-amber-500 text-white"
-                            : "bg-transparent text-neutral-600 hover:bg-black/5 dark:text-neutral-300 dark:hover:bg-white/10",
-                            idx > 0 ? "border-l border-black/10 dark:border-white/10" : "",
+                    className="grid grid-cols-2 gap-2 sm:w-[220px]"
+                    role="group"
+                    aria-label={`${rowPrefix} ${i + 1} frequency`}
+                  >
+                    {FREQS.map((opt) => {
+                      const active = it.frequency === opt;
+                      const label = getFrequencyLabel(opt);
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={[
+                            "rounded-lg border px-3 py-2 text-[10px] font-medium whitespace-nowrap shadow-sm focus:outline-none focus-visible:ring-2 transition-colors",
+                            active
+                              ? "border-amber-500 bg-amber-500 text-white"
+                              : "border-black/10 bg-amber-50/60 text-neutral-600 hover:bg-black/5 dark:border-white/10 dark:bg-neutral-900/60 dark:text-neutral-300 dark:hover:bg-white/10",
                           ].join(" ")}
                           aria-pressed={active}
                           aria-label={opt}
@@ -348,6 +355,7 @@ export function IncomesEditor({
                             const k = e.key.toLowerCase();
                             if (k === "w") update(i, { frequency: "weekly" });
                             if (k === "f") update(i, { frequency: "fortnightly" });
+                            if (k === "m") update(i, { frequency: "monthly" });
                             if (k === "a") update(i, { frequency: "annual" });
                           }}
                         >
@@ -364,6 +372,7 @@ export function IncomesEditor({
                   {isAnnual && typeof it.amount === "number" && `≈ ${Math.round((it.amount / 52) * 100) / 100} weekly`}
                   {isWeekly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 52 * 100) / 100} annual`}
                   {isFortnightly && typeof it.amount === "number" && `≈ ${Math.round(it.amount * 26 * 100) / 100} annual`}
+                  {isMonthly && typeof it.amount === "number" && `≈ ${Math.round(toAnnual(it.amount, "monthly") * 100) / 100} annual`}
                 </span>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import type { Frequency } from "@/lib/types";
+import { toAnnual } from "@/lib/frequency";
 
 const nf = new Intl.NumberFormat("en-US");
 
@@ -47,8 +47,8 @@ export function RentInput({
   onChange,
   currencySymbol = "$",
 }: {
-  value: { amount: number; frequency: Frequency; annual: number };
-  onChange: (v: { amount: number; frequency: Frequency; annual: number }) => void;
+  value: { amount: number; frequency: "monthly"; annual: number };
+  onChange: (v: { amount: number; frequency: "monthly"; annual: number }) => void;
   currencySymbol?: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -65,7 +65,9 @@ export function RentInput({
     }
   }, [value.amount]);
 
-  const annual = Number.isFinite(value.annual) ? value.annual : value.amount * 52;
+  const annual = Number.isFinite(value.annual)
+    ? value.annual
+    : toAnnual(value.amount, value.frequency);
 
   const handleAmountChange = (raw: string) => {
     const el = inputRef.current!;
@@ -83,7 +85,7 @@ export function RentInput({
     onChange({
       ...value,
       amount,
-      annual: amount * 52,
+      annual: toAnnual(amount, value.frequency),
     });
 
     // restore caret after re-render
@@ -111,38 +113,35 @@ export function RentInput({
 
     const rounded = Math.round(Number(numeric) * 100) / 100;
     setDraft(nf.format(rounded));
-    onChange({ ...value, amount: rounded, annual: rounded * 52 });
+    onChange({ ...value, amount: rounded, annual: toAnnual(rounded, value.frequency) });
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <label className="block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-        Weekly rent
+        Monthly rent
       </label>
-      <div className="flex items-center gap-3">
-        <div className="relative w-48">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500 dark:text-neutral-400">
-            {currencySymbol}
-          </span>
-            <input
-              ref={inputRef}
-              type="text"
-              inputMode="decimal"
-            className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 pl-7 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
-              value={draft}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              onBlur={handleBlur}
-            onFocus={() => {
-              if (!draft && value.amount) setDraft(nf.format(value.amount));
-            }}
-            placeholder="0.00"
-            aria-label="Weekly rent"
-          />
-        </div>
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">per week</span>
+      <div className="relative w-full max-w-[220px]">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500 dark:text-neutral-400">
+          {currencySymbol}
+        </span>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="decimal"
+          className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 pl-7 text-right font-mono tabular-nums text-neutral-900 placeholder:text-neutral-400 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus-visible:ring-amber-400/40"
+          value={draft}
+          onChange={(e) => handleAmountChange(e.target.value)}
+          onBlur={handleBlur}
+          onFocus={() => {
+            if (!draft && value.amount) setDraft(nf.format(value.amount));
+          }}
+          placeholder="0.00"
+          aria-label="Monthly rent"
+        />
       </div>
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-        Annual rent (×52):{" "}
+        Annual rent:{" "}
         <strong className="text-neutral-900 dark:text-neutral-100">
           {currencySymbol}
           {nf.format(annual || 0)}

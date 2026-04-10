@@ -6,10 +6,10 @@ import { IncomesEditor } from "@/components/IncomesEditor";
 import { TotalsPanel } from "@/components/TotalsPanel";
 import { AffordabilityCard } from "@/components/AffordabilityCard";
 import { postCalculate } from "@/lib/api";
+import { toAnnual } from "@/lib/frequency";
 import type {
   CalculateRequest,
   CalculateResponse,
-  Frequency,
   IncomeItem,
 } from "@/lib/types";
 // UI shape that matches IncomesEditor (amount can be "")
@@ -25,8 +25,8 @@ const CURRENCIES = [
 ];
 
 export default function HomePage() {
-  const [rent, setRent] = useState<{ amount: number | ""; frequency: Frequency }>(
-    { amount: "", frequency: "weekly" }
+  const [rent, setRent] = useState<{ amount: number | ""; frequency: "monthly" }>(
+    { amount: "", frequency: "monthly" }
   );
   const currency = CURRENCIES[0];
   const rentForInput = useMemo(() => {
@@ -34,13 +34,13 @@ export default function HomePage() {
     return {
       amount: amt,
       frequency: rent.frequency,
-      annual: amt * 52, // always ×52
+      annual: toAnnual(amt, rent.frequency),
     };
   }, [rent]);
 
   const handleRentChange = (v: {
     amount: number;
-    frequency: Frequency;
+    frequency: "monthly";
     annual: number;
   }) => {
     setRent({ amount: v.amount, frequency: v.frequency });
@@ -132,8 +132,8 @@ export default function HomePage() {
               Rent Affordability Calculator
             </h1>
             <p className="max-w-xl text-sm text-neutral-700 dark:text-neutral-300">
-              Add weekly rent and income streams to see annual totals and your affordability
-              band in real time.
+              Add rent and income streams in weekly, fortnightly, monthly, or annual amounts
+              to see annual totals and your affordability band in real time.
             </p>
           </div>
           </header>

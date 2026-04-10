@@ -1,4 +1,4 @@
-export type Frequency = "weekly" | "fortnightly" | "annual";
+export type Frequency = "weekly" | "fortnightly" | "monthly" | "annual";
 
 export interface Amount {
   amount: number;
