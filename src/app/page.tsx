@@ -25,8 +25,8 @@ const CURRENCIES = [
 ];
 
 export default function HomePage() {
-  const [rent, setRent] = useState<{ amount: number | ""; frequency: "monthly" }>(
-    { amount: "", frequency: "monthly" }
+  const [rent, setRent] = useState<{ amount: number | ""; frequency: "weekly" }>(
+    { amount: "", frequency: "weekly" }
   );
   const currency = CURRENCIES[0];
   const rentForInput = useMemo(() => {
@@ -40,7 +40,7 @@ export default function HomePage() {
 
   const handleRentChange = (v: {
     amount: number;
-    frequency: "monthly";
+    frequency: "weekly";
     annual: number;
   }) => {
     setRent({ amount: v.amount, frequency: v.frequency });

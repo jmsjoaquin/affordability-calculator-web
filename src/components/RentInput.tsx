@@ -47,8 +47,8 @@ export function RentInput({
   onChange,
   currencySymbol = "$",
 }: {
-  value: { amount: number; frequency: "monthly"; annual: number };
-  onChange: (v: { amount: number; frequency: "monthly"; annual: number }) => void;
+  value: { amount: number; frequency: "weekly"; annual: number };
+  onChange: (v: { amount: number; frequency: "weekly"; annual: number }) => void;
   currencySymbol?: string;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -119,7 +119,7 @@ export function RentInput({
   return (
     <div className="space-y-3">
       <label className="block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-        Monthly rent
+        Rent
       </label>
       <div className="relative w-full max-w-[220px]">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -137,7 +137,7 @@ export function RentInput({
             if (!draft && value.amount) setDraft(nf.format(value.amount));
           }}
           placeholder="0.00"
-          aria-label="Monthly rent"
+          aria-label="Weekly rent"
         />
       </div>
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
