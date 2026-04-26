@@ -50,6 +50,17 @@ export default function HomePage() {
   const [result, setResult] = useState<CalculateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const reqCounter = useRef(0);
+
+  const handleClearAll = () => {
+    reqCounter.current += 1;
+    setRent({ amount: "", frequency: "weekly" });
+    setTenants([]);
+    setOthers([]);
+    setResult(null);
+    setLoading(false);
+    setErr(null);
+  };
 
   // --- helpers ---
   const normalize = (rows: UIIncomeItem[]): IncomeItem[] =>
@@ -75,9 +86,6 @@ export default function HomePage() {
       other_incomes: normalize(others),
     };
   }, [canCompute, rent, tenants, others]);
-
-  // Track latest request to avoid race conditions
-  const reqCounter = useRef(0);
 
   // --- auto compute on input with debounce ---
   useEffect(() => {
@@ -149,8 +157,17 @@ export default function HomePage() {
                   Rent & income
                 </h2>
               </div>
-              <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                Auto-calculates as you type
+              <div className="flex items-center gap-3">
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Auto-calculates as you type
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-medium text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 dark:border-white/10 dark:bg-neutral-900/70 dark:text-neutral-200 dark:hover:bg-neutral-900"
+                >
+                  Clear all
+                </button>
               </div>
             </div>
 
